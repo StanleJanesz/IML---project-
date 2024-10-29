@@ -79,6 +79,12 @@ minMin = 1000000.0
 it = 1
 meanListOne = []
 meanListZero = []
+maxListZero = []
+maxListOne = []
+minListZero = []
+minListOne = []
+allTimeClassOne = []
+allTimeClassZero = []
 
 
 for file in wav_files_one:
@@ -86,6 +92,7 @@ for file in wav_files_one:
     print('Files analyzed: {}'.format(it))
     it += 1
     t, sr = get_audio_length(file)
+    allTimeClassOne.append(int(t))
     if srprev != 0:
         if sr != srprev:
             isSame = False
@@ -95,6 +102,8 @@ for file in wav_files_one:
 
     maxTemp, minTemp, meanTemp = get_audio_minmax(file)
     meanListOne.append(meanTemp)
+    maxListOne.append(maxTemp)
+    minListOne.append(minTemp)
     maxSum += maxTemp
     minSum += minTemp
     if maxTemp > maxMax:
@@ -117,6 +126,7 @@ for file in wav_files_two:
     print('Loading: {:.2f}%'.format(it/1500 * 100))
     print('Files analyzed: {}'.format(it))
     t, sr = get_audio_length(file)
+    allTimeClassZero.append(int(t))
     if srprev != 0:
         if sr != srprev:
             isSame2 = False
@@ -125,6 +135,8 @@ for file in wav_files_two:
     srSum += sr
 
     maxTemp, minTemp, meanTemp = get_audio_minmax(file)
+    maxListZero.append(maxTemp)
+    minListZero.append(minTemp)
     meanListZero.append(meanTemp)
     maxSum += maxTemp
     minSum += minTemp
@@ -168,11 +180,34 @@ print('Mean minimum amplitude for files in class zero: {}'.format(classZeroMeanM
 
 print('Creating boxplots...\n')
 figure, (ax1, ax2) = plt.subplots(1, 2)
+figure.suptitle('Mean values', fontsize=16)
 ax1.boxplot(meanListOne)
 ax1.set_title('Class one')
 ax2.boxplot(meanListZero)
 ax2.set_title('Class zero')
 
+figureMax, (axMax1, axMax2) = plt.subplots(1, 2)
+figureMax.suptitle('Max values', fontsize=16)
+axMax1.boxplot(maxListOne)
+axMax1.set_title('Class one')
+axMax2.boxplot(maxListZero)
+axMax2.set_title('Class zero')
+
+figureMin, (axMin1, axMin2) = plt.subplots(1, 2)
+figureMin.suptitle('Min values', fontsize=16)
+axMin1.boxplot(minListOne)
+axMin1.set_title('Class one')
+axMin2.boxplot(minListZero)
+axMin2.set_title('Class zero')
+
+figureTime, (axTime1, axTime2) = plt.subplots(1, 2)
+figureTime.suptitle('Duration [s]', fontsize=16)
+axTime1.boxplot(allTimeClassOne)
+axTime1.set_title('Class one')
+axTime2.boxplot(allTimeClassZero)
+axTime2.set_title('Class zero')
+
+print('Plots created.')
 plt.tight_layout()
 plt.show()
       
