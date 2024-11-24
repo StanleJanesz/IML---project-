@@ -2,6 +2,8 @@ import os
 import scipy.io.wavfile as wv
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+from tkinter import filedialog as fd
 
 def output_duration(length): 
     hours = length // 3600  # calculate in hours 
@@ -27,19 +29,37 @@ def get_audio_length(file):
     sample_rate, data = wv.read(file)
     len_data = len(data)
     t = len_data / sample_rate
+
         
     return t, sample_rate
 
 def get_audio_minmax(file):
     _, data = wv.read(file)
-    return max(data), min(data)
+    minVal = 100000
+    maxVal = -100000
+    sumVal = 0.0
+    for datapoint in data:
+        if(datapoint<minVal):
+            minVal = datapoint
+        if(datapoint>maxVal):
+            maxVal = datapoint
+        sumVal += datapoint
+
+    meanVal = sumVal / len(data)
+    return maxVal, minVal, meanVal
+
+def get_folder_paths():
+    print('Please select the directory with class one files.')
+    classOne = fd.askdirectory()
+    print('Now, please select the directory with class zero files.')
+    classZero = fd.askdirectory()
+    return classOne, classZero
 
     
     
 
 # Example usage
-folder_path_one = "C:\\Users\\lgors\\Downloads\\daps\\daps\\Class_One"
-folder_path_two = "C:\\Users\\lgors\\Downloads\\daps\\daps\\Class_Two"
+folder_path_one, folder_path_two = get_folder_paths()
 wav_files_one = collect_wav_files(folder_path_one)
 wav_files_two = collect_wav_files(folder_path_two)
 
@@ -54,15 +74,25 @@ srSum = 0
 srSum2 = 0
 maxSum = 0.0
 minSum = 0.0
-maxMax = 0.0
+maxMax = -1000000.0
 minMin = 1000000.0
 it = 1
+meanListOne = []
+meanListZero = []
+maxListZero = []
+maxListOne = []
+minListZero = []
+minListOne = []
+allTimeClassOne = []
+allTimeClassZero = []
 
 
 for file in wav_files_one:
     print('Loading: {:.2f}%'.format(it/1500 * 100))
+    print('Files analyzed: {}'.format(it))
     it += 1
     t, sr = get_audio_length(file)
+    allTimeClassOne.append(int(t))
     if srprev != 0:
         if sr != srprev:
             isSame = False
@@ -70,7 +100,10 @@ for file in wav_files_one:
     t1 += t
     srSum += sr
 
-    maxTemp, minTemp = get_audio_minmax(file)
+    maxTemp, minTemp, meanTemp = get_audio_minmax(file)
+    meanListOne.append(meanTemp)
+    maxListOne.append(maxTemp)
+    minListOne.append(minTemp)
     maxSum += maxTemp
     minSum += minTemp
     if maxTemp > maxMax:
@@ -89,8 +122,11 @@ minMin = 1000000.0
 
 srprev = 0
 for file in wav_files_two:
+    it+=1
     print('Loading: {:.2f}%'.format(it/1500 * 100))
+    print('Files analyzed: {}'.format(it))
     t, sr = get_audio_length(file)
+    allTimeClassZero.append(int(t))
     if srprev != 0:
         if sr != srprev:
             isSame2 = False
@@ -98,7 +134,10 @@ for file in wav_files_two:
     t2 += t
     srSum += sr
 
-    maxTemp, minTemp = get_audio_minmax(file)
+    maxTemp, minTemp, meanTemp = get_audio_minmax(file)
+    maxListZero.append(maxTemp)
+    minListZero.append(minTemp)
+    meanListZero.append(meanTemp)
     maxSum += maxTemp
     minSum += minTemp
     if maxTemp > maxMax:
@@ -139,7 +178,38 @@ print('Minimum amplitude for class zero: {}'.format(classZeroMin))
 print('Mean maximum amplitude for files in class zero: {}'.format(classZeroMeanMax))
 print('Mean minimum amplitude for files in class zero: {}'.format(classZeroMeanMin))
 
+print('Creating boxplots...\n')
+figure, (ax1, ax2) = plt.subplots(1, 2)
+figure.suptitle('Mean values', fontsize=16)
+ax1.boxplot(meanListOne)
+ax1.set_title('Class one')
+ax2.boxplot(meanListZero)
+ax2.set_title('Class zero')
 
+figureMax, (axMax1, axMax2) = plt.subplots(1, 2)
+figureMax.suptitle('Max values', fontsize=16)
+axMax1.boxplot(maxListOne)
+axMax1.set_title('Class one')
+axMax2.boxplot(maxListZero)
+axMax2.set_title('Class zero')
+
+figureMin, (axMin1, axMin2) = plt.subplots(1, 2)
+figureMin.suptitle('Min values', fontsize=16)
+axMin1.boxplot(minListOne)
+axMin1.set_title('Class one')
+axMin2.boxplot(minListZero)
+axMin2.set_title('Class zero')
+
+figureTime, (axTime1, axTime2) = plt.subplots(1, 2)
+figureTime.suptitle('Duration [s]', fontsize=16)
+axTime1.boxplot(allTimeClassOne)
+axTime1.set_title('Class one')
+axTime2.boxplot(allTimeClassZero)
+axTime2.set_title('Class zero')
+
+print('Plots created.')
+plt.tight_layout()
+plt.show()
       
 
 
