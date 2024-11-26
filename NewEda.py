@@ -24,11 +24,11 @@ import seaborn as sns
 plt.figure(figsize=(12, 8))
 
 # Plot histograms for each numerical feature
-numerical_columns = ["Mean_R", "Mean_G", "Mean_B", "Mean_Brightness", "Mean_Saturation", "Contrast"]
+numerical_columns = [ "Mean_R", "Mean_G", "Mean_B", "Mean_Brightness", "Mean_Saturation", "Contrast"]
 
 # Plotting individual histograms
 for i, col in enumerate(numerical_columns):
-    plt.subplot(2, 3, i + 1)
+    plt.subplot(2, 4, i + 1)
     sns.histplot(data[col], kde=True, bins=20)
     plt.title(f'Distribution of {col}')
 
@@ -49,7 +49,12 @@ plt.title('Person Distribution')
 plt.xticks(rotation=90)  # Rotate x-axis labels if there are many unique persons
 plt.show()
 
-
+# Plot the distribution of 'Script'
+plt.figure(figsize=(12, 6))
+sns.countplot(x='Script', data=data)
+plt.title('Script Distribution')
+plt.xticks(rotation=90)  # Rotate x-axis labels if there are many unique persons
+plt.show()
 # Compute the correlation matrix
 correlation_matrix = data[numerical_columns].corr()
 
@@ -63,9 +68,46 @@ plt.show()
 # Box plots for 'Gender' vs numerical features
 plt.figure(figsize=(12, 8))
 for i, col in enumerate(numerical_columns):
-    plt.subplot(2, 3, i + 1)
+    plt.subplot(2, 4, i + 1)
     sns.boxplot(x='Gender', y=col, data=data)
     plt.title(f'Gender vs {col}')
+plt.tight_layout()
+plt.show()
+
+# Box plots for 'Script' vs numerical features
+plt.figure(figsize=(12, 8))
+for i, col in enumerate(numerical_columns):
+    plt.subplot(2, 4, i + 1)
+    sns.boxplot(x='Script', y=col, data=data)
+    plt.title(f'Script vs {col}')
+plt.tight_layout()
+plt.show()
+
+# Box plots for 'AudioType' vs numerical features
+plt.figure(figsize=(12, 8))
+for i, col in enumerate(numerical_columns):
+    plt.subplot(2, 4, i + 1)
+    sns.boxplot(x='AudioType', y=col, data=data)
+    plt.title(f'AudioType vs {col}')
+plt.tight_layout()
+plt.show()
+
+# Box plots for 'IsTestSet' vs numerical features
+plt.figure(figsize=(12, 8))
+for i, col in enumerate(numerical_columns):
+    plt.subplot(2, 4, i + 1)
+    sns.boxplot(x='IsTestSet', y=col, data=data)
+    plt.title(f'IsTestSet vs {col}')
+plt.tight_layout()
+plt.show()
+
+
+# Box plots for 'Class' vs numerical features
+plt.figure(figsize=(12, 8))
+for i, col in enumerate(numerical_columns):
+    plt.subplot(2, 4, i + 1)
+    sns.boxplot(x='Class', y=col, data=data)
+    plt.title(f'Class vs {col}')
 plt.tight_layout()
 plt.show()
 
@@ -73,7 +115,7 @@ plt.show()
 # Box plots for 'Person' vs numerical features
 plt.figure(figsize=(12, 8))
 for i, col in enumerate(numerical_columns):
-    plt.subplot(2, 3, i + 1)
+    plt.subplot(2, 4, i + 1)
     sns.boxplot(x='Person', y=col, data=data)
     plt.title(f'Person vs {col}')
 plt.tight_layout()
@@ -88,5 +130,26 @@ plt.show()
 plt.figure(figsize=(12, 6))
 sns.countplot(x='Person', hue='Gender', data=data)
 plt.title('Person vs Gender Distribution')
+plt.xticks(rotation=90)
+plt.show()
+
+# Countplot of Person vs IsTestSet
+plt.figure(figsize=(12, 6))
+sns.countplot(x='Person', hue='IsTestSet', data=data)
+plt.title('Person vs IsTestSet Distribution')
+plt.xticks(rotation=90)
+plt.show()
+
+# Countplot of Person vs Gender
+plt.figure(figsize=(12, 6))
+sns.countplot(x='AudioType', hue='IsTestSet', data=data)
+plt.title('AudioType vs IsTestSet Distribution')
+plt.xticks(rotation=90)
+plt.show()
+
+# Countplot of Person vs Gender
+plt.figure(figsize=(12, 6))
+sns.countplot(x='Person', hue='IsTestSet', data=data)
+plt.title('Person vs IsTestSet Distribution')
 plt.xticks(rotation=90)
 plt.show()
