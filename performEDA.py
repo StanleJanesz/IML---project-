@@ -4,23 +4,28 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from tkinter import filedialog as fd
+import time
+from joblib import Parallel, delayed
+from itertools import chain
+from operator import methodcaller
+import seaborn as sns
+import librosa
+
 
 def output_duration(length): 
-    hours = length // 3600  # calculate in hours 
+    hours = length // 3600
     length %= 3600
-    mins = length // 60  # calculate in minutes 
+    mins = length // 60
     length %= 60
-    seconds = length  # calculate in seconds 
+    seconds = length
   
     return hours, mins, seconds 
 
 def collect_wav_files(root_folder):
-    wav_files = []  # List to store the paths of .wav files
-    # Walk through the directory tree
+    wav_files = []
     for dirpath, dirnames, filenames in os.walk(root_folder):
         for filename in filenames:
             if filename.endswith('.wav'):
-                # Construct the full file path and append to the list
                 full_path = os.path.join(dirpath, filename)
                 wav_files.append(full_path)
     return wav_files
@@ -48,6 +53,43 @@ def get_audio_minmax(file):
     meanVal = sumVal / len(data)
     return maxVal, minVal, meanVal
 
+def create_plots(file, foldername):
+
+    plotdirname = foldername + "/Plots"
+    wvdirname = plotdirname + "/Waveforms"
+    sptdirname = plotdirname + "/Spectrograms"
+    fftdirname = plotdirname + "/FFTs"
+
+    basefilename, _ = os.path.splitext(os.path.basename(file))
+    
+    y, sample_rate = librosa.load(file)
+    audio_file, _ = librosa.effects.trim(y)
+
+    plt.figure(figsize = (16,6))
+    librosa.display.waveshow(y = audio_file, sr = sample_rate, color = "#C0FFEE")
+    plt.title(f'Sound waves for file {os.path.basename(file)}', fontsize=23)
+
+    os.chdir(wvdirname)
+    plt.savefig(basefilename+"_waveform"+".jpg")
+    os.chdir(foldername)
+
+    n_fft = 2048
+    hop_length = 512
+
+    D = np.abs(librosa.stft(audio_file, n_fft=n_fft, hop_length=hop_length))
+    plt.figure(figsize=(16,6))
+    plt.plot(D)
+
+    os.chdir(fftdirname)
+    plt.savefig(basefilename+"_fft"+".jpg")
+    os.chdir(foldername)
+    
+
+    
+
+    
+    
+
 def get_folder_paths():
     print('Please select the directory with class one files.')
     classOne = fd.askdirectory()
@@ -55,161 +97,130 @@ def get_folder_paths():
     classZero = fd.askdirectory()
     return classOne, classZero
 
-    
-    
-
-# Example usage
-folder_path_one, folder_path_two = get_folder_paths()
-wav_files_one = collect_wav_files(folder_path_one)
-wav_files_two = collect_wav_files(folder_path_two)
-
-print('Wav files collected. Beginning analysis...')
-
-t1 = 0
-t2 = 0
-srprev = 0
-isSame = True
-isSame2 = True
-srSum = 0
-srSum2 = 0
-maxSum = 0.0
-minSum = 0.0
-maxMax = -1000000.0
-minMin = 1000000.0
-it = 1
-meanListOne = []
-meanListZero = []
-maxListZero = []
-maxListOne = []
-minListZero = []
-minListOne = []
-allTimeClassOne = []
-allTimeClassZero = []
-
-
-for file in wav_files_one:
-    print('Loading: {:.2f}%'.format(it/1500 * 100))
-    print('Files analyzed: {}'.format(it))
-    it += 1
+def analyze_file(file, foldername):
+    maxVal, minVal, meanVal, = get_audio_minmax(file)
     t, sr = get_audio_length(file)
-    allTimeClassOne.append(int(t))
-    if srprev != 0:
-        if sr != srprev:
-            isSame = False
-    srprev = sr
-    t1 += t
-    srSum += sr
 
-    maxTemp, minTemp, meanTemp = get_audio_minmax(file)
-    meanListOne.append(meanTemp)
-    maxListOne.append(maxTemp)
-    minListOne.append(minTemp)
-    maxSum += maxTemp
-    minSum += minTemp
-    if maxTemp > maxMax:
-        maxMax = maxTemp
-    if minTemp < minMin:
-        minMin = minTemp
+    # create_plots(file, foldername)
 
-classOneMax = maxMax
-classOneMin = minMin
-classOneMeanMax = maxSum / len(wav_files_one)
-classOneMeanMin = minSum / len(wav_files_one)
-maxSum = 0.0
-minSum = 0.0
-maxMax = 0.0
-minMin = 1000000.0
+    return {
+        'file_name': file,
+        'duration': t,
+        'amplitude_max': maxVal,
+        'amplitude_min': minVal,
+        'amplitude_mean': meanVal
+    }
 
-srprev = 0
-for file in wav_files_two:
-    it+=1
-    print('Loading: {:.2f}%'.format(it/1500 * 100))
-    print('Files analyzed: {}'.format(it))
-    t, sr = get_audio_length(file)
-    allTimeClassZero.append(int(t))
-    if srprev != 0:
-        if sr != srprev:
-            isSame2 = False
-    srprev = sr
-    t2 += t
-    srSum += sr
+def analyze_files(folder, foldername):
 
-    maxTemp, minTemp, meanTemp = get_audio_minmax(file)
-    maxListZero.append(maxTemp)
-    minListZero.append(minTemp)
-    meanListZero.append(meanTemp)
-    maxSum += maxTemp
-    minSum += minTemp
-    if maxTemp > maxMax:
-        maxMax = maxTemp
-    if minTemp < minMin:
-        minMin = minTemp
+    plotdirname = foldername + "/Plots"
+    wvdirname = plotdirname + "/Waveforms"
+    sptdirname = plotdirname + "/Spectrograms"
+    fftdirname = plotdirname + "/FFTs"
+        
+    if not os.path.isdir(plotdirname):
+        os.makedirs(plotdirname)
 
-classZeroMax = maxMax
-classZeroMin = minMin
-classZeroMeanMax = maxSum / len(wav_files_two)
-classZeroMeanMin = minSum / len(wav_files_two)
+    if not os.path.isdir(wvdirname):
+        os.makedirs(wvdirname)
 
-if(isSame == False or isSame2 == False):
-    print("Sample rates differ")
+    if not os.path.isdir(sptdirname):
+        os.makedirs(sptdirname)    
+
+    if not os.path.isdir(fftdirname):
+        os.makedirs(fftdirname)
+    
+    results = Parallel(n_jobs=10, verbose = 10)(delayed(analyze_file)(file, foldername) for file in folder)
+    results_df = pd.DataFrame(results)
+
+    print('Duplicate Values:')
+    print(results_df.nunique())
+
+    sns.set_style("darkgrid")
+    numerical_columns = results_df.select_dtypes(include=["int64", "float64", "int16"]).columns
+    plt.figure(figsize=(14, len(numerical_columns) * 3))
+    for idx, feature in enumerate(numerical_columns, 1):
+        plt.subplot(len(numerical_columns), 2, idx)
+        sns.histplot(results_df[feature], kde=True)
+        plt.title(f"{feature} | Skewness: {round(results_df[feature].skew(), 2)}")
+    plt.tight_layout(pad=3)
+
+
+    sns.set_palette("Pastel1")
+    sns.pairplot(results_df)
+    
+    plt.tight_layout()
+    plt.show()
+    
+    return results_df
+
+def process_csv(file):
+    csv = pd.read_csv(file)
+    print(csv.head())
+
+    print(csv.describe())
+
+    print(csv.dtypes)
+
+    csv = csv.drop(['Image'], axis=1)
+
+    sns.set_style("darkgrid")
+    numerical_columns = csv.select_dtypes(include=["int64", "float64", "int16"]).columns
+    plt.figure(figsize=(14, len(numerical_columns) * 3))
+    for idx, feature in enumerate(numerical_columns, 1):
+        plt.subplot(len(numerical_columns), 2, idx)
+        sns.histplot(csv[feature], kde=True)
+        plt.title(f"{feature} | Skewness: {round(csv[feature].skew(), 2)}")
+    plt.tight_layout(pad=3)
+    plt.show()
+
+    plt.figure(figsize=(14, len(numerical_columns) * 3))
+    for idx, feature in enumerate(numerical_columns, 1):
+        plt.subplot(len(numerical_columns), 2, idx)
+        sns.boxplot(x=csv[feature])
+        plt.title(f"{feature}")
+    plt.tight_layout(pad=3)
+    plt.show()
+
+    Q1 = csv.quantile(0.25)
+    Q3 = csv.quantile(0.75)
+    IQR = Q3 - Q1
+    print(IQR)
+
+    plt.figure(figsize=(10,5))
+    c = csv.corr()
+    sns.heatmap(c, cmap="BrBG", annot=True)
+
+    sns.set_palette("Pastel1")
+    sns.pairplot(results_df)
+
+    plt.tight_layout()
+    plt.show()
     
 
-hoursOne, minutesOne, secondsOne = output_duration(int(t1))
-hoursTwo, minutesTwo, secondsTwo = output_duration(int(t2))
 
-print('ANALYSIS COMPLETE!')
+    
 
-print(f"Number of files in class One: {len(wav_files_one)}")
-print(f"Number of files in class Zero: {len(wav_files_two)}")
+def analyze_csv():
 
-print('Total duration of Class One files: {}:{}:{}'.format(hoursOne, minutesOne, secondsOne))
-print('Total duration of Class Zero files: {}:{}:{}'.format(hoursTwo, minutesTwo, secondsTwo))
+    file = fd.askopenfilename(title="Select a File", filetypes=[("Comma Separated Value Files", "*.csv")])
+    if file:
+        process_csv(file)
+    
 
-print('Mean sample rate for Class One: {}'.format(srSum/len(wav_files_one)))
-print('Mean sample rate for Class Zero: {}'.format(srSum/len(wav_files_two)))
 
-print('Maximum amplitude for class one: {}'.format(classOneMax))
-print('Minimum amplitude for class one: {}'.format(classOneMin))
-print('Mean maximum amplitude for files in class one: {}'.format(classOneMeanMax))
-print('Mean minimum amplitude for files in class one: {}'.format(classOneMeanMin))
+if __name__ == '__main__':
+    '''
+    folder_path_one, folder_path_zero = get_folder_paths()
+    wav_files_one = collect_wav_files(folder_path_one)
+    wav_files_zero = collect_wav_files(folder_path_zero)
 
-print('Maximum amplitude for class zero: {}'.format(classZeroMax))
-print('Minimum amplitude for class zero: {}'.format(classZeroMin))
-print('Mean maximum amplitude for files in class zero: {}'.format(classZeroMeanMax))
-print('Mean minimum amplitude for files in class zero: {}'.format(classZeroMeanMin))
+    print('Wav files collected. Beginning analysis...')
+    class_one_df = analyze_files(wav_files_one, folder_path_one)
+    class_zero_df = analyze_files(wav_files_zero, folder_path_zero)
+    '''
+    analyze_csv()
 
-print('Creating boxplots...\n')
-figure, (ax1, ax2) = plt.subplots(1, 2)
-figure.suptitle('Mean values', fontsize=16)
-ax1.boxplot(meanListOne)
-ax1.set_title('Class one')
-ax2.boxplot(meanListZero)
-ax2.set_title('Class zero')
-
-figureMax, (axMax1, axMax2) = plt.subplots(1, 2)
-figureMax.suptitle('Max values', fontsize=16)
-axMax1.boxplot(maxListOne)
-axMax1.set_title('Class one')
-axMax2.boxplot(maxListZero)
-axMax2.set_title('Class zero')
-
-figureMin, (axMin1, axMin2) = plt.subplots(1, 2)
-figureMin.suptitle('Min values', fontsize=16)
-axMin1.boxplot(minListOne)
-axMin1.set_title('Class one')
-axMin2.boxplot(minListZero)
-axMin2.set_title('Class zero')
-
-figureTime, (axTime1, axTime2) = plt.subplots(1, 2)
-figureTime.suptitle('Duration [s]', fontsize=16)
-axTime1.boxplot(allTimeClassOne)
-axTime1.set_title('Class one')
-axTime2.boxplot(allTimeClassZero)
-axTime2.set_title('Class zero')
-
-print('Plots created.')
-plt.tight_layout()
-plt.show()
+    
       
-
 
