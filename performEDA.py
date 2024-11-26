@@ -10,6 +10,7 @@ from itertools import chain
 from operator import methodcaller
 import seaborn as sns
 import librosa
+from sklearn.preprocessing import LabelEncoder
 
 
 def output_duration(length): 
@@ -156,30 +157,31 @@ def analyze_files(folder, foldername):
 
 def process_csv(file):
     csv = pd.read_csv(file)
+    label_encoder = LabelEncoder()
     print(csv.head())
 
     print(csv.describe())
 
     print(csv.dtypes)
 
-    csv = csv.drop(['Image'], axis=1)
+    csv = csv.drop(['Image', 'Mean_Saturation', 'Mean_Brightness', 'Mean_G', 'Mean_B'], axis=1)
+    categorical_columns = csv.select_dtypes(include=["object"]).columns
+    for column in categorical_columns:
+        csv[column] = label_encoder.fit_transform(csv[column])
 
     sns.set_style("darkgrid")
     numerical_columns = csv.select_dtypes(include=["int64", "float64", "int16"]).columns
-    plt.figure(figsize=(14, len(numerical_columns) * 3))
+    plt.figure(figsize=(14, len(numerical_columns) * 3), layout='constrained')
     for idx, feature in enumerate(numerical_columns, 1):
         plt.subplot(len(numerical_columns), 2, idx)
         sns.histplot(csv[feature], kde=True)
-        plt.title(f"{feature} | Skewness: {round(csv[feature].skew(), 2)}")
-    plt.tight_layout(pad=3)
+        plt.title(f"Skewness: {round(csv[feature].skew(), 2)}")
     plt.show()
 
-    plt.figure(figsize=(14, len(numerical_columns) * 3))
+    plt.figure(figsize=(14, len(numerical_columns) * 3), layout='constrained')
     for idx, feature in enumerate(numerical_columns, 1):
         plt.subplot(len(numerical_columns), 2, idx)
         sns.boxplot(x=csv[feature])
-        plt.title(f"{feature}")
-    plt.tight_layout(pad=3)
     plt.show()
 
     Q1 = csv.quantile(0.25)
@@ -187,14 +189,15 @@ def process_csv(file):
     IQR = Q3 - Q1
     print(IQR)
 
-    plt.figure(figsize=(10,5))
+    plt.figure(figsize=(10,5), layout='constrained')
     c = csv.corr()
     sns.heatmap(c, cmap="BrBG", annot=True)
 
+    '''
     sns.set_palette("Pastel1")
-    sns.pairplot(results_df)
+    sns.pairplot(csv)
+    '''
 
-    plt.tight_layout()
     plt.show()
     
 
