@@ -1,0 +1,63 @@
+\documentclass[11pt, letterpaper]{article}
+\usepackage{graphicx}
+\usepackage[export]{adjustbox}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\graphicspath{{images/}}
+\usepackage[a4paper, total={6in, 8in}]{geometry}
+\usepackage{tabularx}
+\usepackage{polski}
+\usepackage{float}
+
+
+\title{\textbf {Audio classification with machine learning} \\ \large Introduction to Machine Learning 2024/2025Z}
+
+\author{Łukasz Górski \\ Piotr Iśtok \\ Piotr Jacak \\ Stanisław Janowicz \\ Marcin Falkowski}
+
+\date{Styczeń 2025}
+
+
+\begin{document}
+\maketitle
+
+\newpage
+\tableofcontents
+\newpage
+
+\section{Abstract}
+
+The task we will be attempting to solve in this project is a binary recognition problem, meaning that the program's main function is to transform a given input into either 1 or 0, depending on certain properties and conditions. Specifically, the input will consist of a single audio file, either uploaded directly or recorded on a recorder with a microphone by the program. We will transform this audio file into a spectrogram and, after cleaning and pre-processing, pass it into the model to determine its membership in class one, representing the people who are granted access, or class zero, or the people who are denied.
+
+The intended use of this project is on a voice-based intercom device that must discern whether a person has the authority to enter restricted areas.
+
+\section{Introduction}
+
+In this section we present some useful background information on audio classification and on the more technical aspects of the project.
+
+\subsection{Audio Classification}
+
+
+\section{Methodology}
+\section{Exploratory Data Analysis}
+
+Exploratory Data Analysis (or EDA for short) is the process of gathering information from the given data set before using it for the purposes of informed decision making later on. Since our data are in the form of .wav files, we use the \verb | scipy.io.wavfile |Python library to load it in order to analyze it by looking directly at the array representing it. This was our first attempt at EDA, and although the code itself runs quick, it gives us very little useful information. Namely, we only have access to the numbers: the minimum and maximum values of the array, the means, sample rates and the lengths of the files in each class. This is hardly enough - the length of an audio doesn't, and shouldn't, affect how is it classified.
+
+Therefore, we make use of Python libraries more suited to accomplishing our goals. After presenting the audio in the form of spectrograms, we extract helpful details into a .csv file, which becomes the input of the next stages of EDA. The details shown in the .csv vary greatly from the simple values of the previous step, and are of much greater importance to us. Here are the features we managed to extract in this way: Person, Gender, Script, Audio Type, Is Test Set, Class, and Contrast. Let's explain them one by one:
+\begin{itemize}
+    \item Person - the person speaking in the audio, as described in the Data section,
+    \item Gender - the gender of the person (either male or female),
+    \item Script - the script read in the audio,
+    \item Audio Type - type of audio (either cleanraw, ipadflat, ipad, or iphone)
+    \item Is Test Set - a binary value describing whether the file was used in training the model or testing it,
+    \item Class - 0 or 1, as described in the Introduction
+    \item Contrast - the contrast of the image.
+\end{itemize}
+Besides these values, there were five other features - average RGB values of the image as well as the Brightness and Saturation. However, as discussed in the Spectrograms section, the spectrograms were in grayscale, making all of these values equal to each other, and thus redundant. Because of this, we have decided on just analyzing the Mean Red value of the images with the understanding that it also signifies the other features from this section.
+
+
+
+\section{Cleaning and pre-processing}
+\section{Models used}
+\section{Results}
+
+\end{document}
