@@ -128,6 +128,16 @@ Lower values indicate a negative correlation between two variables, while values
 
 Fortunately, looking at the value of the intersection between Gender and IsTestSet (0.015), the test set itself is fairly balanced.
 
+To better understand our data we decided to explore the impact of different kinds of spectrograms on tested values. Thanks to this we could try and predict which method of creating spectrograms could improve our model. This way we could skip testing model for every method of generating spectrograms, since the process is very time-consuming. Predictions were based on comparing features of spectrograms which gave good results to those with bad ones. 
+
+First, however, we had to choose the training set and the testing one. We decided that it was vital that the distribution of data in each set is similar, and we made sure that no fragment of audio is used in both sets.  The results of our tests were satisfactory, and we proved that the proportions of main features such as audio type, speaker, gender or the script being recited, are similar for both sets.
+
+At this point, it is worth noting that even though distribution of audio in the whole dataset based on gender was similar, the amount of audio provided by individual speakers could vary greatly (which could negatively impact the recognition of some speakers compared to others). Other features resulting from spectrograms were also similar for each set (with the method for creating spectrograms we choose in the end giving the best results). 
+
+We noticed that every speaker had very noticeable traits which were reflected in the features we got from inspecting spectrograms, some methods gave slightly better results than others. There is no such distinction between groups labeled for entry and others, however. It is assumed that no matter which method of creation was used, this situation would not change, as the number of speakers in each class is random (not related in means other than class).
+
+Different kinds of spectrogram models gave different results in terms of compared features. In the end the best results were given by MEL-type spectrograms. Those spectrograms were superior in reflecting differences between different speakers and their genders, while having similar effects no matter for which audio tape they were used on. The CNN model using them had best results compared to other types of spectrograms.
+
 \section{Cleaning and pre-processing}
 \section{Models used}
 \section{Results}
