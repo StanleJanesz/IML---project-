@@ -25,7 +25,28 @@
 \newpage
 
 \section{Wprowadzenie i ogólna koncepcja}
-\section{Cleaning and pre-processing}
-\section{Cos o spektrogramach}
+\section{Data cleaning and pre-processing}
+\subsection{Preprocessing}
+\subsection{Cleaning}
+In machine learning applications that involve audio data, such as speaker identification, the quality of the input signal is critical. Background noise can obscure important voice features, which can lead to reduced model performance. One way of overcoming this issue and improving SNR (signal to noise ratio) is denoising data using spectral gating. It works by computing a spectrogram of a signal (and optionally a noise signal) and estimating a noise threshold (or gate) for each frequency band of that signal/noise.
+That threshold is used to compute a mask, which gates noise below the frequency-varying threshold. The main reasons why it is a good option for reducing noise are:
+\begin{itemize}
+    \item \textbf{Preservation of signal features:}
+        Spectral gating works in the frequency domain, selectively weakening noise-dominated frequencies, keeping the structure of our target signal (voice) mostly intact.
+    \item \textbf{Flexibility:}
+        The method uses a noise profile derived from a sample with only background noise, which allows our program to adapt to different environments such as street noise, electrical noise and reverberation. Because of it our code is simple without any noticeable performance drop.
+    \item \textbf{Ease of use:}
+        This method of denoising is implemented in the free-to-use Python library called "noisereduce", keeping our solution easily reproducible and can be seamlessly integrated into our pipeline.
+\end{itemize}
+Unfortunately, spectral gating also has its drawbacks. The biggest one is that, for it to work there needs to be a noise sample provided, which can be for us sometimes impossible to distinguish. That's why in that case our denoising step in pipeline will use band-stop filter, implemented with Butterworth filter. The main advantages of it are:
+\begin{itemize}
+    \item \textbf{No need for a noisy sample:}
+        This filter always removes lower frequencies, so urban sounds can be easily eliminated, without the need of noisy sample.
+    \item \textbf{Preservation of higher frequencies:}
+        The Butterworth filter's characteristic smooth frequency response ensures minimal distortion in the preserved higher frequencies.
+    \item \textbf{Preprocessing Simplicity:}
+        This approach is computationally efficient and easy to implement.
+\end{itemize}
+The reason why it is not used all the time is that it has many limitations. It is not ideal for broadband noise. It may not effectively remove all of it. The other one is that it overlaps with voice frequencies, so it can also attenuate it resulting in reduced intelligibility.\\We also considered using deep learning for audio cleaning, as it has shown great potential by leveraging neural networks to learn complex mappings between noisy and clean audio signals. However, we came to the conclusion that it is too advanced a tool to remove such simple noises and two methods described before are efficient enough.\section{Cos o spektrogramach}
 
 \end{document}
