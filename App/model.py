@@ -32,7 +32,6 @@ class Net(nn.Module):
 
     def forward(self, x):
         x = self.conv_layers(x)
-        print(x.shape)
         x = self.fc_layers(x)
         return x
     

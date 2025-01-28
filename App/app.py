@@ -17,7 +17,6 @@ class App(tk.Tk):
         self.recording = None     # Data of the recording
         self.freq = 44100         # Sample frequency
         self.duration = 5         # Duration in seconds
-        #self.file_path = "recordings"  # Directory to save recordings
 
         # Create an entry text box and a label explaining it
         self.recordingNameTextBox = tk.Entry(self)
@@ -58,7 +57,7 @@ class App(tk.Tk):
             return
         
         thread = threading.Thread(target=self.record)
-        thread.start()
+        #thread.start()
 
     def record(self):
         try:         
@@ -75,8 +74,6 @@ class App(tk.Tk):
             self.recordingLabel.config(text="Saved!")
             self.update()
 
-            self.recordingLabel.config(text="Processing...")
-            self.update()
             self.recognize(file_path)
 
         except Exception as e:
@@ -97,15 +94,19 @@ class App(tk.Tk):
         self.update()
 
     def recognize(self, file_path):
-        from helpers import denoise_audio, remove_silence, create_mel_spectrogram, predict
-                
+        from helpers import denoise_audio, remove_silence, cut_file, create_mel_spectrograms, predict
+        
+        self.recordingLabel.config(text="Processing...")
+        self.update()
+
         denoise_audio(file_path)
         remove_silence()
-        create_mel_spectrogram()
+        cut_file()
+        create_mel_spectrograms()
         predicted_class = predict()
 
-        print(f"Predicted class: {predicted_class.item()}")
-        if predicted_class.item() == 1:
+        print(f"Predicted class: {predicted_class}")
+        if predicted_class == 1:
             self.recordingLabel.config(text="Voice accepted!", fg="green")
         else:
             self.recordingLabel.config(text="Voice declined!", fg="red")

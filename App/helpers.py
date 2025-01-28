@@ -18,6 +18,7 @@ from model import Net
 
 
 def denoise_audio(path, RMS_percentile = 25, lowcut = 100, highcut = 500, order = 4):
+    """Gets audio file and removes background noise"""
     data, sr = librosa.load(path, sr = 16000)
 
     rms = librosa.feature.rms(y = data)[0]
@@ -36,13 +37,14 @@ def denoise_audio(path, RMS_percentile = 25, lowcut = 100, highcut = 500, order 
 
     # Save denoised audio
     print("Audio denoised")
-    sf.write("App/audio/audio_temp.wav", reduced_noise, sr)
+    sf.write("App/audio/audio.wav", reduced_noise, sr)
 
 
 def remove_silence():
+    """Removes silence parts from denoised audio"""
     audio_format = "wav"
     # Reading and splitting the audio file into chunks
-    sound = AudioSegment.from_file("App/audio/audio_temp.wav", format = audio_format) 
+    sound = AudioSegment.from_file("App/audio/audio.wav", format = audio_format) 
     audio_chunks = split_on_silence(sound, min_silence_len = 100, silence_thresh = -45, keep_silence = 50)
     
     # Putting the file back together
@@ -51,31 +53,68 @@ def remove_silence():
         combined += chunk
     
     print("Audio silenced")
-    combined.export("App/audio/audio_silenced_temp.wav", format = audio_format)
+    combined.export("App/audio/audio_silenced.wav", format = audio_format)
 
 
-def create_mel_spectrogram():
-    data, sample_rate = librosa.load("App/audio/audio_silenced_temp.wav", sr = 16000)
 
-    mel_spectrogram = librosa.feature.melspectrogram(y = data, sr = sample_rate)
-    mel_spectrogram_db = librosa.power_to_db(mel_spectrogram, ref = np.max)
 
-    plt.figure(figsize=(10,5))
-    librosa.display.specshow(
-        mel_spectrogram_db,
-        y_axis = "log",
-        x_axis = "time",
-        sr = sample_rate,
-        cmap = "gray",
-    )
+def split_audio_to_segments(data, sample_rate, segment_duration = 2):
+    """Splits silenced and denoised audio into segments of specified duration ready to be saved"""
+    segment_samples = int(segment_duration * sample_rate)
+    segments = []
 
-    plt.title("Test spectrogram")
-    plt.ylabel('Frequency [Hz]')
-    plt.xlabel('Time [sec]')
+    for i in range(len(data)//segment_samples):
+        segment = data[i * segment_samples:(i + 1) * segment_samples]
+        segments.append(segment)
 
-    print("Spectrogram created")
-    plt.savefig("App/images/image_temp.jpg")
-    plt.close()
+    return segments
+
+def segments_to_wav(segments, sample_rate):
+    """Saves segments into .wav files"""
+    for i, segment in enumerate(segments):
+        path = f"App/audio/parts/audio_silenced_part_{i+1}.wav"
+        wavfile.write(path, sample_rate, segment)
+
+def cut_file(segments_duration = 2):
+    """Splits audio file and saves it into .wav files"""
+
+    file_path = "App/audio/audio_silenced.wav"
+    sample_rate, data = wavfile.read(file_path)
+
+    # Checking if stereo (using only mono)
+    if len(data.shape) == 2:
+        data = data[:0]
+
+    segments = split_audio_to_segments(data, sample_rate, segments_duration)
+    segments_to_wav(segments, sample_rate)
+
+
+
+
+def create_mel_spectrograms():
+    """Creates spectrograms for denoised and silenced audio parts"""
+    for file in os.listdir('App/audio/parts'):
+        if(file.endswith(".wav")):
+            data, sample_rate = librosa.load(f"App/audio/parts/{file}", sr = 16000)
+            base_name = os.path.splitext(os.path.basename(file))[0]
+
+            mel_spectrogram = librosa.feature.melspectrogram(y = data, sr = sample_rate)
+            mel_spectrogram_db = librosa.power_to_db(mel_spectrogram, ref = np.max)
+
+            plt.figure(figsize=(10,5))
+            librosa.display.specshow(
+                mel_spectrogram_db,
+                y_axis = "log",
+                x_axis = "time",
+                sr = sample_rate,
+                cmap = "gray",
+            )
+
+            plt.title(base_name)
+            plt.ylabel('Frequency [Hz]')
+            plt.xlabel('Time [sec]')
+            plt.savefig(f"App/images/image_{base_name}.jpg")
+            plt.close()
 
 
 def predict():
@@ -84,14 +123,31 @@ def predict():
     model.load_state_dict(torch.load("App/model_15_7.pth", map_location=torch.device('cpu')))
     model.eval()
 
-    image = prepare_image()
-    output = model(image)
+    positives = 0
+    all = 0
+    result = 0
 
-    _, predicted_class = torch.max(output, 1)
-    return predicted_class
+    for file in os.listdir('App/images'):
+        if(file.endswith(".jpg")):
+            image = prepare_image(file)
+            output = model(image)
+
+            _, predicted_class = torch.max(output, 1)
+            
+            all += 1
+            positives += predicted_class.item()
+
+    ratio = positives / all
+    if ratio > 0.7:
+        result = 1
+    else:
+        result = 0
+
+    return result
 
 
-def prepare_image():
+
+def prepare_image(file):
     transform = transforms.Compose(
         [transforms.Resize((96, 194)),transforms.ToImage(),\
         transforms.ToDtype(torch.float32, scale=True),\
@@ -101,7 +157,7 @@ def prepare_image():
     right = 901
     bottom = 446
 
-    image = Image.open("App/images/image_temp.jpg")
+    image = Image.open(f"App/images/{file}")
     image = image.crop((left, top, right, bottom))
     image = transform(image)
     image = image.unsqueeze(0)
