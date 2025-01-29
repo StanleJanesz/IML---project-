@@ -88,8 +88,6 @@ In speaker recognition tasks, the selection of an appropriate feature extraction
 \end{itemize}
 Additionally all spectrograms are stored in grayscale to take up as little space as possible without loosing important data for further usage.
 
-\section{Methodology}
-
 \section{Exploratory Data Analysis}
 
 Exploratory Data Analysis (or EDA for short) is the process of gathering information from the given data set before using it for the purposes of informed decision making later on. Since our data are in the form of .wav files, we use the \verb | scipy.io.wavfile |Python library to load it in order to analyze it by looking directly at the array representing it. This was our first attempt at EDA, and although the code itself runs quick, it gives us very little useful information. Namely, we only have access to the numbers: the minimum and maximum values of the array, the means, sample rates and the lengths of the files in each class. This is hardly enough - the length of an audio doesn't, and shouldn't, affect how is it classified.
@@ -138,8 +136,71 @@ We noticed that every speaker had very noticeable traits which were reflected in
 
 Different kinds of spectrogram models gave different results in terms of compared features. In the end the best results were given by MEL-type spectrograms. Those spectrograms were superior in reflecting differences between different speakers and their genders, while having similar effects no matter for which audio tape they were used on. The CNN model using them had best results compared to other types of spectrograms.
 
-\section{Cleaning and pre-processing}
-\section{Models used}
-\section{Results}
+\section{Model Training}
+\subsection{Dataset}
+
+The dataset used for this project consists of voice samples cut into 2-second fragments. To guarantee that all the fragments of a voice sample end up in the same set, we decided to choose recordings randomly and assign them to either the training set or the test set as follows:
+
+\begin{itemize}
+    \item \textbf{Training set}: 85\% of the data, which is 1100 out of 1300 recordings.
+    \item \textbf{Test set}: 15\% of the data, which is 200 out of 1300 recordings (60 from class 1 and 140 from class 0 to keep proportions even).
+\end{itemize}
+
+\subsection{Model Testing}
+
+Testing various models started with a simple network from the PyTorch tutorial. We used the simplest spectrograms for this one, with a linear scale. The purpose of this model was to get a grasp of how everything works and ensure we could proceed with more advanced models. Since the images were quite large for machine learning, we resized them to ¼ of their size in each dimension. This gave us a macro-averaged F1-score of 0.72 (on the test set).
+
+Shortly after, we tested a very similar model, with the main change being the addition of more epochs (from 3 to 10), which naturally improved the result to an F1 score of 0.78, which was satisfactory for the first stage.
+
+\subsection{Second Stage: Advanced Model}
+
+During the second stage, we decided on a slightly more advanced model with 3 convolutional layers and 2 fully connected layers. We kept using the SGD optimizer, 10 epochs, and a batch size of 64 as in the first stage. We did not want to overcomplicate this model, as the main purpose was to decide which spectrograms were the best. Data analysis suggested that some of them could be better, but theory only takes you so far, so we decided to train a model using the same network for each type of spectrogram:
+
+\begin{enumerate}
+    \item First, we tried mel spectrograms, which we believed to be the best. With an F1 score of 0.9, it was a noticeable improvement over the previous stage, but not the best yet.
+    \item The second type of spectrograms we tested were spectrograms with a logarithmic scale. They appeared to be better than the mel ones, as the model gave us an F1 score of 0.94.
+    \item To ensure completeness, we tried the first type again (linear scale), and the result was the worst, with an F1 score of 0.85.
+    \item To improve the spectrograms (especially the mel ones), we changed the sampling rate to 16000. In the case of spectrograms 2, it increased the F1 score to 0.95.
+    \item The improvement was more noticeable for mel spectrograms, allowing us to achieve an F1 score of 0.955.
+    \item We tried noise removal as well. However, the results were not the best, as the F1 score dropped to 0.94 for mel spectrograms. While it is not a significant drop, we decided not to use this idea in the next stages. Although the audio sounded better to the human ear after noise removal, it clearly was not better for machine learning. Most likely, it removed some features from the recording that were not noticeable to us but were useful for the training process.
+    \item Similarly, spectrograms 2 also got worse after removing the noise, as the F1 score dropped to 0.93, further proving that noise removal did not work as intended.
+    \item We attempted audio normalization (using the librosa.pcen function) on our 16000 mel spectrograms, but it also made them worse, giving an F1 score of 0.93.
+\end{enumerate}
+
+As a result of these experiments, we decided to use mel spectrograms with a 16000 sampling rate to train the next models, as they appeared to be the most accurate. Alternatively, we could try using spectrograms 2. We did not create the 16000 sampling rate or noise removal versions of the linear spectrograms, as they were clearly the worst and could not possibly outperform the others.
+
+\subsection{Further Tests}
+
+During further tests, we tried changing the transform to resize the images to only ½ of their original size in each dimension. While it seemed promising at first, as the loss started decreasing very rapidly (as seen in the figure), the result was comparable to that of the previous model, with an F1 score of 0.94.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{lossplot1.png}
+    \caption{A graph showing the change in loss values during training.}
+\end{figure}
+
+Another model was an attempt at something more experimental, as we tried a different activation function (LeakyReLU instead of ReLU) and added batch normalization. However, as a result of unnecessary additions (most likely adaptive average pooling, which was not needed here), the model ended up being greatly overfitted, with an F1 score of 0.77 on the test set compared to 0.94 on the training set.
+
+\subsection{Most Successful Model}
+
+Our most successful model was similar to the one we tested all our spectrograms on, but with the addition of batch normalization and an additional fully connected layer, giving us 3 convolutional layers and 3 fully connected layers. On top of that, we changed the optimizer to Adam. The results were by far the most satisfying, as we got an F1 score of 0.966 after only 10 epochs. Batch normalization seemed to be key in this case.
+
+Since it was our most accurate model, we decided to experiment further and test how much the number of epochs would affect the result. After 30 epochs, the accuracy improved only slightly (0.968 F1), which was not as much as we expected. After another 30 epochs (giving a total of 60), the results did not improve at all. All of this can be noticed in the figure showing the change in loss values during training. Halfway through the training process, we reached a plateau, and the model stopped learning. We also tried a different approach, in which we changed the learning rate throughout the training to a lower value (from 0.001 to 0.0002), but it also did not help much, giving more or less the same accuracy for both sets.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{lossplot2.png}
+    \caption{A graph showing the change in loss values during training with different learning rates.}
+\end{figure}
+
+\subsection{Final Attempts}
+
+Next, we attempted to improve our model by increasing the number of layers (4 convolutional, 3 fully connected), changing the dropout probability, changing the parameters of the layers, and changing the batch size (from 64 to 32 or 128), but none of these proved effective. All these models hovered around an F1 score of 0.95, making them slightly worse than our best one.
+
+During our last attempts, we tried changing our spectrograms a bit by resizing them differently, as many sources on the internet used images of size 64x64. However, this also did not achieve anything interesting, as the result was comparable to previous ones.
+
+\section{Conclusion}
+
+In conclusion, it seems that we hit a kind of barrier around 0.96-0.97 f1, and without some major changes to the way we create our model or some solid data augmentation, getting our model to reach an F1 score of 0.98 or higher seemed improbable.
 
 \end{document}
