@@ -203,4 +203,14 @@ During our last attempts, we tried changing our spectrograms a bit by resizing t
 
 In conclusion, it seems that we hit a kind of barrier around 0.96-0.97 f1, and without some major changes to the way we create our model or some solid data augmentation, getting our model to reach an F1 score of 0.98 or higher seemed improbable.
 
+\section{Results}
+Finally we created a simple User Interface with implemented model. App allows user to recognize voice: voice can be accepted or declined. Sample voice can be either recorded in real time using device's microphone or loaded from file. \\
+Audio file with voice is then denoised and splitted into segments, silent segments are deleted. Why is this approach necessary? Since the model was trained on 2-second audio segments, it is optimal to analyze future files in the same manner. Processing audio in identical segments ensures consistency between training and inference, improving classification accuracy. \\
+Then App creates MEL spectrograms for each segment and after proper transformation all of them are passed to our best CNN model. Model defines class for each image. The final classification is defined as follows:
+\begin{itemize}
+\item If more than 70\% of images are assigned to class 1, then the final class is 1 - voice accepted
+\item Otherwise, the final class is 0 - voice declined
+\end{itemize}
+This method ensures that the model processes audio in a way that aligns with its training data, leading to more reliable and consistent classification results. After such analysis, app displays result on the screen.
+
 \end{document}

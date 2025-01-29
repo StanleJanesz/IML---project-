@@ -91,11 +91,11 @@ def cut_file(segments_duration = 2):
 
 
 
-def create_mel_spectrograms():
+def create_mel_spectrograms(path, path_out="App/images"):
     """Creates spectrograms for denoised and silenced audio parts"""
-    for file in os.listdir('App/audio/parts'):
+    for file in os.listdir(path):
         if(file.endswith(".wav")):
-            data, sample_rate = librosa.load(f"App/audio/parts/{file}", sr = 16000)
+            data, sample_rate = librosa.load(f"{path}/{file}", sr = 16000)
             base_name = os.path.splitext(os.path.basename(file))[0]
 
             mel_spectrogram = librosa.feature.melspectrogram(y = data, sr = sample_rate)
@@ -113,11 +113,11 @@ def create_mel_spectrograms():
             plt.title(base_name)
             plt.ylabel('Frequency [Hz]')
             plt.xlabel('Time [sec]')
-            plt.savefig(f"App/images/image_{base_name}.jpg")
+            plt.savefig(f"{path_out}/image_{base_name}.jpg")
             plt.close()
 
 
-def predict():
+def predict(path):
     num_classes = 2
     model = Net(num_classes)
     model.load_state_dict(torch.load("App/model_15_7.pth", map_location=torch.device('cpu')))
@@ -127,7 +127,7 @@ def predict():
     all = 0
     result = 0
 
-    for file in os.listdir('App/images'):
+    for file in os.listdir(path):
         if(file.endswith(".jpg")):
             image = prepare_image(file)
             output = model(image)

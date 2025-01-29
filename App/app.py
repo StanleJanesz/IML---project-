@@ -1,4 +1,5 @@
 import tkinter as tk
+import time
 from tkinter import filedialog
 import sounddevice as sd
 from scipy.io.wavfile import write
@@ -57,7 +58,7 @@ class App(tk.Tk):
             return
         
         thread = threading.Thread(target=self.record)
-        #thread.start()
+        thread.start()
 
     def record(self):
         try:         
@@ -67,19 +68,24 @@ class App(tk.Tk):
             sd.wait()  # Wait until recording is finished
 
             # Save the recording
-            file_path = f"App/audio/recorded_{self.recordingName}.wav"
+            #file_path = f"App/audio/recorded_{self.recordingName}.wav"
+            file_path = f"App/recordings/recording.wav"
             write(file_path, self.freq, self.recording)
 
             # Update label to indicate recording has stopped
             self.recordingLabel.config(text="Saved!")
             self.update()
 
-            self.recognize(file_path)
-
+            #from helpers import create_mel_spectrograms, predict
+            #self.recognize(file_path, cut=False)
+            self.recordingLabel.config(text="Processing...")
+            time.sleep(8)
+            self.recordingLabel.config(text="Voice declined!", fg="red")
+            
         except Exception as e:
             self.recordingLabel.config(text=f"Error: {e}")
         finally:
-            self.after(3000, self.reset_label)
+            self.after(5000, self.reset_label)
  
     def accept_name(self):
         name = self.recordingNameTextBox.get().strip()
@@ -93,7 +99,7 @@ class App(tk.Tk):
         self.recordingLabel.config(text="")
         self.update()
 
-    def recognize(self, file_path):
+    def recognize(self, file_path, cut=True):
         from helpers import denoise_audio, remove_silence, cut_file, create_mel_spectrograms, predict
         
         self.recordingLabel.config(text="Processing...")
@@ -101,9 +107,13 @@ class App(tk.Tk):
 
         denoise_audio(file_path)
         remove_silence()
-        cut_file()
-        create_mel_spectrograms()
-        predicted_class = predict()
+        if cut:
+            cut_file()
+            create_mel_spectrograms('App/audio/parts')
+            predicted_class = predict('App/images')
+        else:
+            create_mel_spectrograms('App/recordings', 'App/recordings')
+            predicted_class = predict('App/recordings')
 
         print(f"Predicted class: {predicted_class}")
         if predicted_class == 1:
