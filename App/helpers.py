@@ -17,7 +17,7 @@ from PIL import Image
 from model import Net
 
 
-def denoise_audio(path, RMS_percentile = 25, lowcut = 100, highcut = 500, order = 4):
+def denoise_audio(path, RMS_percentile = 25, lowcut = 100, highcut = 1000, order = 4):
     """Gets audio file and removes background noise"""
     data, sr = librosa.load(path, sr = 16000)
 
