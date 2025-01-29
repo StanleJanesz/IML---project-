@@ -14,6 +14,7 @@ Lukasz Gorski
 * EDAplots - plots acquired with perform EDA
 
 ### Models
+```separate.py``` is used to separate the test set from training set. ```training_model.ipynb``` has functions for cutting images and creating csv which are needed before training the model. The rest of the notebook is used for training the model, cells shoudl be executed in their respective order. At the end there are functions for saving and simple testing of the model. ```results.ipynb``` allows to test the accuracy of models and calculate the F1. ```loss_plots.ipynb``` allows plotting the loss values which we got during our training.
 
 ### App
 All the app files are in App folder. To run the application user needs to run App/app.py file. Our best model is in file App/model.py.
