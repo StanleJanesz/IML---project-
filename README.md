@@ -3,9 +3,15 @@ There is dedicated notebook for denoising of audio called ```denoiseAudio_notebo
 
 ### EDA
 main files used to perform EDA are located in EDA folder. 
+
+Stanislaw Janowicz
 * createCSV - was beeing used to extract selected features from spectogrms>  
-* testEDA2 and NewEDA - contain functions used to create plots 
-* EDA_plots - contains plots on which data interpretation was based (main results of exploration are included in report)
+* testEDA2 and NewEDA - contain functions used to create plots helping discover features of spectograms
+* EDA_plots - contains plots on which data interpretation was based (main results of exploration are included in report) \
+
+Lukasz Gorski
+* performEDA - runs simple EDA on wav files and some on spectgrams 
+* EDAplots - plots acquired with perform EDA
 
 ### Models
 
