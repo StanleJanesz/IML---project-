@@ -10,3 +10,4 @@ main files used to perform EDA are located in EDA folder.
 ### Models
 
 ### App
+All the app files are in App folder. To run the application user needs to run App/app.py file. Our best model is in file App/model.py.
