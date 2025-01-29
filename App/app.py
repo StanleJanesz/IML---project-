@@ -17,7 +17,7 @@ class App(tk.Tk):
         self.recordingName = None  # Name of the recording
         self.recording = None     # Data of the recording
         self.freq = 44100         # Sample frequency
-        self.duration = 5         # Duration in seconds
+        self.duration = 6         # Duration in seconds
 
         # Create an entry text box and a label explaining it
         self.recordingNameTextBox = tk.Entry(self)
@@ -58,7 +58,7 @@ class App(tk.Tk):
             return
         
         thread = threading.Thread(target=self.record)
-        thread.start()
+        #thread.start()
 
     def record(self):
         try:         
@@ -75,12 +75,8 @@ class App(tk.Tk):
             # Update label to indicate recording has stopped
             self.recordingLabel.config(text="Saved!")
             self.update()
-
-            #from helpers import create_mel_spectrograms, predict
+            
             #self.recognize(file_path, cut=False)
-            self.recordingLabel.config(text="Processing...")
-            time.sleep(8)
-            self.recordingLabel.config(text="Voice declined!", fg="red")
             
         except Exception as e:
             self.recordingLabel.config(text=f"Error: {e}")

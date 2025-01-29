@@ -71,6 +71,7 @@ def split_audio_to_segments(data, sample_rate, segment_duration = 2):
 
 def segments_to_wav(segments, sample_rate):
     """Saves segments into .wav files"""
+
     for i, segment in enumerate(segments):
         path = f"App/audio/parts/audio_silenced_part_{i+1}.wav"
         wavfile.write(path, sample_rate, segment)
@@ -78,6 +79,7 @@ def segments_to_wav(segments, sample_rate):
 def cut_file(segments_duration = 2):
     """Splits audio file and saves it into .wav files"""
 
+    clean_folder("App/audio/parts")
     file_path = "App/audio/audio_silenced.wav"
     sample_rate, data = wavfile.read(file_path)
 
@@ -93,6 +95,8 @@ def cut_file(segments_duration = 2):
 
 def create_mel_spectrograms(path, path_out="App/images"):
     """Creates spectrograms for denoised and silenced audio parts"""
+    clean_folder("App/images")
+
     for file in os.listdir(path):
         if(file.endswith(".wav")):
             data, sample_rate = librosa.load(f"{path}/{file}", sr = 16000)
@@ -118,6 +122,7 @@ def create_mel_spectrograms(path, path_out="App/images"):
 
 
 def predict(path):
+    """Uses best model to predict class for file"""
     num_classes = 2
     model = Net(num_classes)
     model.load_state_dict(torch.load("App/model_15_7.pth", map_location=torch.device('cpu')))
@@ -148,6 +153,7 @@ def predict(path):
 
 
 def prepare_image(file):
+    """Prepares image to passing it to model"""
     transform = transforms.Compose(
         [transforms.Resize((96, 194)),transforms.ToImage(),\
         transforms.ToDtype(torch.float32, scale=True),\
@@ -163,3 +169,10 @@ def prepare_image(file):
     image = image.unsqueeze(0)
 
     return image
+
+
+def clean_folder(path):
+    """Cleans folder before adding new files"""
+    for file in os.listdir(path):
+        file_path = os.path.join(path, file)
+        os.remove(file_path)
