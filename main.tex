@@ -176,7 +176,7 @@ During further tests, we tried changing the transform to resize the images to on
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{lossplot1.png}
-    \caption{A graph showing the change in loss values during training.}
+    \caption{A graph showing the change in loss values during training}
 \end{figure}
 
 Another model was an attempt at something more experimental, as we tried a different activation function (LeakyReLU instead of ReLU) and added batch normalization. However, as a result of unnecessary additions (most likely adaptive average pooling, which was not needed here), the model ended up being greatly overfitted, with an F1 score of 0.77 on the test set compared to 0.94 on the training set.
@@ -190,7 +190,7 @@ Since it was our most accurate model, we decided to experiment further and test 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{lossplot2.png}
-    \caption{A graph showing the change in loss values during training with different learning rates.}
+    \caption{A graph showing the change in loss values during training of our best model}
 \end{figure}
 
 \subsection{Final Attempts}
